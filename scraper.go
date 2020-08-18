@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+        "crypto/tls"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/prometheus/client_golang/prometheus"
@@ -108,6 +109,15 @@ func ScrapeMetrics(ldapAddr, ldapUser, ldapPass string) {
 	}
 }
 
+func ScrapeSecureMetrics(ldapsAddr, ldapUser, ldapPass string, tlsConfig *tls.Config) {
+        if err := scrapeSecureAll(ldapsAddr, ldapUser, ldapPass, tlsConfig); err != nil {
+                scrapeCounter.WithLabelValues("fail").Inc()
+                log.Println("scrape failed, error is:", err)
+        } else {
+                scrapeCounter.WithLabelValues("ok").Inc()
+        }
+}
+
 func scrapeAll(ldapAddr, ldapUser, ldapPass string) error {
 	l, err := ldap.Dial("tcp", ldapAddr)
 	if err != nil {
@@ -130,6 +140,31 @@ func scrapeAll(ldapAddr, ldapUser, ldapPass string) error {
 	}
 	return errs
 }
+
+func scrapeSecureAll(ldapsAddr, ldapUser, ldapPass string, tlsConfig *tls.Config) error {
+        l, err := ldap.DialTLS("tcp", ldapsAddr, tlsConfig)
+        if err != nil {
+                return err
+        }
+        defer l.Close()
+
+        if ldapUser != "" && ldapPass != "" {
+                err = l.Bind(ldapUser, ldapPass)
+                if err != nil {
+                        return err
+                }
+        }
+
+        var errs error
+        for _, q := range queries {
+                if err := scrapeQuery(l, &q); err != nil {
+                        errs = multierror.Append(errs, err)
+                }
+        }
+        return errs
+}
+
+
 
 func scrapeQuery(l *ldap.Conn, q *query) error {
 	req := ldap.NewSearchRequest(
