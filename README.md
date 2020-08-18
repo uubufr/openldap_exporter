@@ -1,5 +1,31 @@
 [![Build Status](https://travis-ci.org/tomcz/openldap_exporter.svg?branch=master)](https://travis-ci.org/tomcz/openldap_exporter)
 
+# Uubu.fr updates #
+
+--ldapAddr: ldap server (default: localhost)
+
+--ldapsAddr: ldap server using tls (default: localhost)
+
+--ldapPort: ldap port (default: 389)
+
+--caPath: path to ca file
+
+--certPath: path to certificate
+
+-- keyPath: path to private key
+
+--verify: check peer certificate (default: false)
+
+## Example:
+
+# simple ldap connection:
+
+/usr/sbin/openldap_exporter --promAddr ":8080" --ldapAddr localhost --ldapPort 389 --ldapUser cn=admin,dc=example,dc=com --ldapPass admin
+
+# ldaps connection with check peer cert:
+
+/usr/sbin/openldap_exporter --promAddr ":8080" --ldapAddr "" --ldapsAddr localhost --ldapPort 636 --ldapUser cn=admin,dc=example,dc=com --ldapPass admin --caPath /path/to/ca.pem --certPath /path/to/cert.pem --keyPath /path/to/key.pem --verify true
+
 # OpenLDAP Prometheus Exporter
 
 This is a simple service that scrapes metrics from OpenLDAP and exports them via HTTP for Prometheus consumption.
